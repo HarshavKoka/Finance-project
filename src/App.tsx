@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage"
 import PeoplePage from "./pages/PeoplePage"
 import RegisterPage from "./pages/RegisterPage"
 import FinancialCoverPage from "./pages/FinancialCoverPage"
+import NotFound from "./pages/NotFound"
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/people" element={<PeoplePage />} />
+          <Route path="*" element={<NotFound />} />
       </Routes>
    
   )

@@ -1,5 +1,6 @@
 import type { Person } from "../pages/PeoplePage"
 
+
 interface Props {
   person: Person
   onDelete: () => void
@@ -14,6 +15,12 @@ const PersonTable = ({ person, onDelete }: Props) => {
             <th className="p-3">Name</th>
             <th className="p-3">Age</th>
             <th className="p-3">City</th>
+            <th className="p-3">Email</th>
+            <th className="p-3">PAN Name</th>
+            <th className="p-3">PAN Number</th>
+            <th className="p-3">Phone</th>
+            <th className="p-3">ID Type</th>
+            <th className="p-3">ITR Last 3 Years</th>
             <th className="p-3">Actions</th>
           </tr>
         </thead>
@@ -22,6 +29,12 @@ const PersonTable = ({ person, onDelete }: Props) => {
             <td className="p-3">{person.name}</td>
             <td className="p-3">{person.age}</td>
             <td className="p-3">{person.city}</td>
+            <td className="p-3">{person.email}</td>
+            <td className="p-3">{person.panName}</td>
+            <td className="p-3">{person.panNumber}</td>
+            <td className="p-3">{person.phoneNumber}</td>
+            <td className="p-3">{person.idType}</td>
+            <td className="p-3">{person.itrLast3Years}</td>
             <td className="p-3">
               <button
                 onClick={onDelete}
