@@ -1,99 +1,123 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import PersonForm from "../components/PersonForm";
-import PersonTable from "../components/PersonTable";
+import { useEffect, useState } from "react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import PersonForm from "../components/PersonForm"
+import PersonTable from "../components/PersonTable"
 
 export interface Person {
-  name: string;
-  age: number;
-  city: string;
-  email: string;
-  panName: string;
-  panNumber: string;
-  phoneNumber: string;
-  idType: string;
-  itrLast3Years: string;
+  name: string
+  dob: string
+  city: string
+  email: string
+  panName: string
+  panNumber: string
+  phoneNumber: string
+  idType: string
+  itrLast3Years: string
+  password?: string
 }
 
 const PeoplePage = () => {
-  const [people, setPeople] = useState<Person[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [suggestions, setSuggestions] = useState<Person[]>([]);
-  const [searchResults, setSearchResults] = useState<Person[]>([]);
+  const [people, setPeople] = useState<Person[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [suggestions, setSuggestions] = useState<Person[]>([])
+  const [searchResults, setSearchResults] = useState<Person[]>([])
+  const [highlightIndex, setHighlightIndex] = useState(-1)
 
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
 
-  const group = searchParams.get("group") || "General";
-  const LOCAL_KEY = `people_data_${group}`;
+  const group = searchParams.get("group") || "General"
+  const LOCAL_KEY = `people_data_${group}`
 
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_KEY);
+    const stored = localStorage.getItem(LOCAL_KEY)
     if (stored) {
       try {
-        const parsed: Person[] = JSON.parse(stored);
-        setPeople(parsed);
+        const parsed: Person[] = JSON.parse(stored)
+        setPeople(parsed)
       } catch {
-        console.error("Invalid JSON in localStorage");
+        console.error("Invalid JSON in localStorage")
       }
     }
-  }, [LOCAL_KEY]);
+  }, [LOCAL_KEY])
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(people));
-  }, [people, LOCAL_KEY]);
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(people))
+  }, [people, LOCAL_KEY])
 
   const addPerson = (person: Person) => {
-    setPeople([...people, person]);
-    setShowForm(false);
-  };
+    setPeople([...people, person])
+    setShowForm(false)
+  }
 
   const deletePerson = (index: number) => {
-    const updated = people.filter((_, i) => i !== index);
-    setPeople(updated);
-    setSearchTerm("");
-    setSuggestions([]);
-    setSearchResults([]);
-  };
+    const updated = people.filter((_, i) => i !== index)
+    setPeople(updated)
+    setSearchTerm("")
+    setSuggestions([])
+    setSearchResults([])
+  }
 
   const handleInputChange = (value: string) => {
-    setSearchTerm(value);
+    setSearchTerm(value)
+    setHighlightIndex(-1)
     if (!value.trim()) {
-      setSuggestions([]);
-      return;
+      setSuggestions([])
+      return
     }
-    const lower = value.toLowerCase();
+    const lower = value.toLowerCase()
     const filtered = people.filter(
       (p) =>
         p.name.toLowerCase().includes(lower) ||
         p.panNumber.toLowerCase().includes(lower) ||
         p.phoneNumber.includes(lower)
-    );
-    setSuggestions(filtered.slice(0, 6));
-  };
+    )
+    setSuggestions(filtered.slice(0, 6))
+  }
 
   const handleSelectSuggestion = (person: Person) => {
-    setSearchTerm(person.name);
-    setSuggestions([]);
-    setSearchResults([person]);
-  };
+    setSearchTerm(person.name)
+    setSuggestions([])
+    setSearchResults([person])
+    setHighlightIndex(-1)
+  }
 
   const handleSearchClick = () => {
     if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
+      setSearchResults([])
+      return
     }
-    const lower = searchTerm.toLowerCase();
+    const lower = searchTerm.toLowerCase()
     const results = people.filter(
       (p) =>
         p.name.toLowerCase().includes(lower) ||
         p.panNumber.toLowerCase().includes(lower) ||
         p.phoneNumber.includes(lower)
-    );
-    setSuggestions([]);
-    setSearchResults(results);
-  };
+    )
+    setSuggestions([])
+    setSearchResults(results)
+    setHighlightIndex(-1)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setHighlightIndex((prev) =>
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setHighlightIndex((prev) => (prev > 0 ? prev - 1 : -1))
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      if (highlightIndex >= 0 && highlightIndex < suggestions.length) {
+        handleSelectSuggestion(suggestions[highlightIndex])
+      } else {
+        handleSearchClick()
+      }
+    }
+  }
 
   return (
     <div className="p-8 space-y-6">
@@ -127,6 +151,7 @@ const PeoplePage = () => {
             placeholder="Search by name, PAN, or phone..."
             value={searchTerm}
             onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="border border-gray-300 rounded-l px-4 py-2 w-full"
           />
           <button
@@ -142,7 +167,9 @@ const PeoplePage = () => {
               <li
                 key={idx}
                 onClick={() => handleSelectSuggestion(person)}
-                className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                className={`px-4 py-2 cursor-pointer ${
+                  idx === highlightIndex ? "bg-blue-100" : "hover:bg-blue-50"
+                }`}
               >
                 {person.name} — {person.panNumber} — {person.phoneNumber}
               </li>
@@ -156,17 +183,17 @@ const PeoplePage = () => {
           {searchResults.map((person, id) => (
             <PersonTable
               key={id}
+        
               person={person}
-              onDelete={() => {
-                const index = people.findIndex((p) => p.name === person.name);
-                if (index !== -1) deletePerson(index);
-              }}
+              people={people}
+              setPeople={setPeople}
+              onDelete={() => deletePerson(id)}
             />
           ))}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default PeoplePage;
+export default PeoplePage
