@@ -2,19 +2,6 @@ import { useNavigate } from "react-router-dom"
 
 const Home = () => {
   const navigate = useNavigate()
-
-  const handleNavigation = (label: string) => {
-    switch (label) {
-      case "IncomeTax":
-      case "GST":
-      case "MCA":
-        navigate(`/people?group=${label}`)
-        break
-      default:
-        break
-    }
-  }
-
   const blocks = ["IncomeTax", "GST", "MCA"]
 
   return (
@@ -23,7 +10,7 @@ const Home = () => {
         {blocks.map((label) => (
           <div
             key={label}
-            onClick={() => handleNavigation(label)}
+            onClick={() => navigate(`/people?group=${label}`)}
             className="cursor-pointer bg-white shadow-lg rounded-xl p-10 text-center text-xl font-semibold hover:bg-blue-100 transition"
           >
             {label}

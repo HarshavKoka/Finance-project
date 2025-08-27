@@ -3,9 +3,10 @@ import type { Person } from "../pages/PeoplePage"
 
 interface Props {
   onAdd: (person: Person) => void
+  group: string
 }
 
-const PersonForm = ({ onAdd }: Props) => {
+const PersonForm = ({ onAdd, group }: Props) => {
   const [form, setForm] = useState<Person>({
     name: "",
     dob: "",
@@ -16,7 +17,11 @@ const PersonForm = ({ onAdd }: Props) => {
     phoneNumber: "",
     idType: "",
     itrLast3Years: "",
-    password: ""
+    password: "",
+    gstNumber: "",
+    businessName: "",
+    cinNumber: "",
+    companyName: ""
   })
 
   const [selectedOption, setSelectedOption] = useState<"itr" | "password">("itr")
@@ -42,7 +47,11 @@ const PersonForm = ({ onAdd }: Props) => {
         phoneNumber: "",
         idType: "",
         itrLast3Years: "",
-        password: ""
+        password: "",
+        gstNumber: "",
+        businessName: "",
+        cinNumber: "",
+        companyName: ""
       })
       setSelectedOption("itr")
     }
@@ -50,7 +59,7 @@ const PersonForm = ({ onAdd }: Props) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <h2 className="text-xl font-semibold">Add New Person</h2>
+      <h2 className="text-xl font-semibold">Add New {group} Person</h2>
 
       <input
         name="name"
@@ -124,28 +133,72 @@ const PersonForm = ({ onAdd }: Props) => {
         required
       />
 
-      <div className="space-y-2">
-        <select
-          value={selectedOption}
-          onChange={(e) => setSelectedOption(e.target.value as "itr" | "password")}
-          className="w-full p-2 border rounded"
-        >
-          <option value="itr">ITR Details</option>
-          <option value="password">Password</option>
-        </select>
-        <input
-          type={selectedOption === "password" ? "password" : "text"}
-          placeholder={selectedOption === "itr" ? "Last 3 Years ITR Details" : "Password"}
-          className="w-full p-2 border rounded"
-          value={selectedOption === "itr" ? form.itrLast3Years : form.password}
-          onChange={(e) =>
-            selectedOption === "itr"
-              ? setForm({ ...form, itrLast3Years: e.target.value })
-              : setForm({ ...form, password: e.target.value })
-          }
-          required
-        />
-      </div>
+      {group === "IncomeTax" && (
+        <div className="space-y-2">
+          <select
+            value={selectedOption}
+            onChange={(e) => setSelectedOption(e.target.value as "itr" | "password")}
+            className="w-full p-2 border rounded"
+          >
+            <option value="itr">ITR Details</option>
+            <option value="password">Password</option>
+          </select>
+          <input
+            type={selectedOption === "password" ? "password" : "text"}
+            placeholder={selectedOption === "itr" ? "Last 3 Years ITR Details" : "Password"}
+            className="w-full p-2 border rounded"
+            value={selectedOption === "itr" ? form.itrLast3Years : form.password}
+            onChange={(e) =>
+              selectedOption === "itr"
+                ? setForm({ ...form, itrLast3Years: e.target.value })
+                : setForm({ ...form, password: e.target.value })
+            }
+            required
+          />
+        </div>
+      )}
+
+      {group === "GST" && (
+        <div className="space-y-2">
+          <input
+            name="gstNumber"
+            placeholder="GST Number"
+            className="w-full p-2 border rounded"
+            value={form.gstNumber}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="businessName"
+            placeholder="Business Name"
+            className="w-full p-2 border rounded"
+            value={form.businessName}
+            onChange={handleChange}
+            required
+          />
+        </div>
+      )}
+
+      {group === "MCA" && (
+        <div className="space-y-2">
+          <input
+            name="cinNumber"
+            placeholder="CIN Number"
+            className="w-full p-2 border rounded"
+            value={form.cinNumber}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="companyName"
+            placeholder="Company Name"
+            className="w-full p-2 border rounded"
+            value={form.companyName}
+            onChange={handleChange}
+            required
+          />
+        </div>
+      )}
 
       <button
         type="submit"

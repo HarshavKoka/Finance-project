@@ -13,6 +13,10 @@ export interface Person {
   phoneNumber: string
   idType: string
   itrLast3Years: string
+  gstNumber?: string
+  businessName?: string
+  cinNumber?: string
+  companyName?: string
   password?: string
 }
 
@@ -70,8 +74,8 @@ const PeoplePage = () => {
     const filtered = people.filter(
       (p) =>
         p.name.toLowerCase().includes(lower) ||
-        p.panNumber.toLowerCase().includes(lower) ||
-        p.phoneNumber.includes(lower)
+        (p.panNumber && p.panNumber.toLowerCase().includes(lower)) ||
+        (p.phoneNumber && p.phoneNumber.includes(lower))
     )
     setSuggestions(filtered.slice(0, 6))
   }
@@ -92,8 +96,8 @@ const PeoplePage = () => {
     const results = people.filter(
       (p) =>
         p.name.toLowerCase().includes(lower) ||
-        p.panNumber.toLowerCase().includes(lower) ||
-        p.phoneNumber.includes(lower)
+        (p.panNumber && p.panNumber.toLowerCase().includes(lower)) ||
+        (p.phoneNumber && p.phoneNumber.includes(lower))
     )
     setSuggestions([])
     setSearchResults(results)
@@ -126,7 +130,7 @@ const PeoplePage = () => {
           {group} People Manager
         </h1>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
         >
           Back to Home
@@ -142,7 +146,7 @@ const PeoplePage = () => {
         </button>
       </div>
 
-      {showForm && <PersonForm onAdd={addPerson} />}
+      {showForm && <PersonForm onAdd={addPerson} group={group} />}
 
       <div className="relative w-full max-w-md ml-auto">
         <div className="flex">
@@ -183,11 +187,11 @@ const PeoplePage = () => {
           {searchResults.map((person, id) => (
             <PersonTable
               key={id}
-        
               person={person}
               people={people}
               setPeople={setPeople}
               onDelete={() => deletePerson(id)}
+              group={group}
             />
           ))}
         </div>
