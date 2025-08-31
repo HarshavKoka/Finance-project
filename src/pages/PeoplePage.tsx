@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query"
 import PersonForm from "../components/PersonForm"
 import PersonTable from "../components/PersonTable"
 
@@ -11,17 +16,17 @@ export interface Person {
   panName: string
   panNumber: string
   phoneNumber: string
-  idType: string
+  idNumber: string
   itrLast3Years: string
   gstNumber?: string
   businessName?: string
   cinNumber?: string
   companyName?: string
   password?: string
+  username?: string
 }
 
 const PeoplePage = () => {
-  const [people, setPeople] = useState<Person[]>([])
   const [showForm, setShowForm] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [suggestions, setSuggestions] = useState<Person[]>([])
@@ -34,30 +39,47 @@ const PeoplePage = () => {
   const group = searchParams.get("group") || "General"
   const LOCAL_KEY = `people_data_${group}`
 
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_KEY)
-    if (stored) {
-      try {
-        const parsed: Person[] = JSON.parse(stored)
-        setPeople(parsed)
-      } catch {
-        console.error("Invalid JSON in localStorage")
-      }
-    }
-  }, [LOCAL_KEY])
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(people))
-  }, [people, LOCAL_KEY])
+ 
+  const { data: people = [] } = useQuery<Person[]>({
+    queryKey: ["people", group],
+    queryFn: async () => {
+      const stored = localStorage.getItem(LOCAL_KEY)
+      return stored ? JSON.parse(stored) : []
+    },
+  })
+
+  const addPersonMutation = useMutation({
+    mutationFn: async (person: Person) => person,
+    onSuccess: (newPerson) => {
+      queryClient.setQueryData<Person[]>(["people", group], (old = []) => {
+        const updated = [...old, newPerson]
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(updated))
+        return updated
+      })
+    },
+  })
+
+
+  const deletePersonMutation = useMutation({
+    mutationFn: async (index: number) => index,
+    onSuccess: (index) => {
+      queryClient.setQueryData<Person[]>(["people", group], (old = []) => {
+        const updated = old.filter((_, i) => i !== index)
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(updated))
+        return updated
+      })
+    },
+  })
 
   const addPerson = (person: Person) => {
-    setPeople([...people, person])
+    addPersonMutation.mutate(person)
     setShowForm(false)
   }
 
   const deletePerson = (index: number) => {
-    const updated = people.filter((_, i) => i !== index)
-    setPeople(updated)
+    deletePersonMutation.mutate(index)
     setSearchTerm("")
     setSuggestions([])
     setSearchResults([])
@@ -131,7 +153,7 @@ const PeoplePage = () => {
         </h1>
         <button
           onClick={() => navigate("/home")}
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition cursor-pointer"
         >
           Back to Home
         </button>
@@ -140,9 +162,9 @@ const PeoplePage = () => {
       <div className="flex justify-end">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center text-blue-600 font-semibold"
+          className="flex items-center text-blue-600 font-semibold cursor-pointer"
         >
-          <span className="text-xl mr-2">+</span> Add new Person details
+          <span className="text-xl mr-2 ">+</span> Add new Person details
         </button>
       </div>
 
@@ -160,7 +182,7 @@ const PeoplePage = () => {
           />
           <button
             onClick={handleSearchClick}
-            className="px-4 bg-blue-500 text-white rounded-r hover:bg-blue-600"
+            className="px-4 bg-blue-500 text-white rounded-r hover:bg-blue-600 cursor-pointer"
           >
             🔍
           </button>
@@ -189,7 +211,7 @@ const PeoplePage = () => {
               key={id}
               person={person}
               people={people}
-              setPeople={setPeople}
+              setPeople={() => {}} 
               onDelete={() => deletePerson(id)}
               group={group}
             />
