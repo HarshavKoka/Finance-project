@@ -1,115 +1,134 @@
 import { useForm } from "react-hook-form"
-import { useState } from "react"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 
+const baseSchema = z.object({
+  name: z.string().min(3, "Name is required"),
+  dob: z.string().min(1, "Date of birth is required"),
+  city: z.string().min(3, "City is required"),
+  email: z.string().email({ message: "Invalid email" }),
+  phoneNumber:z.string()
+  .transform((s) => s.replace(/\D/g, ""))
+  .refine((s) => /^[6-9]\d{9}$/.test(s), { message: "Invalid mobile number" }),
+  idNumber: z.string().min(1, "ID number is required"),
+  username: z.string().optional(),
+  password: z.string().optional(),
+})
 
-interface BasePerson {
-  name: string
-  dob: string
-  city: string
-  email: string
-  phoneNumber: string
-  idNumber: string
-}
+const incomeTaxSchema = baseSchema.extend({
+  panName: z.string().min(4, "PAN Name is required"),
+  panNumber: z.string()
+  .transform((s) => s.toUpperCase())
+  .refine((s) => /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(s), { message: "Invalid PAN" }),
+  itrLast3Years: z.string().optional(),
+})
 
-interface IncomeTaxPerson extends BasePerson {
-  panName: string
-  panNumber: string
-  itrLast3Years: string
-  password?: string
-  username?: string
-}
+const gstSchema = baseSchema.extend({
+  gstNumber: z.string().min(1, "GST Number is required"),
+  businessName: z.string().min(1, "Business Name is required"),
+})
 
-interface GSTPerson extends BasePerson {
-  username: string
-  password: string
-  gstNumber: string
-  businessName: string
-}
+const mcaSchema = baseSchema.extend({
+  cinNumber: z.string().optional(),
+  companyName: z.string().optional(),
+})
 
-interface MCAPerson extends BasePerson {
-  username: string
-  password: string
-  companyName: string
-}
+type IncomeTaxForm = z.infer<typeof incomeTaxSchema>
+type GSTForm = z.infer<typeof gstSchema>
+type MCAForm = z.infer<typeof mcaSchema>
 
-export type Person = IncomeTaxPerson | GSTPerson | MCAPerson
-
-
-interface Props {
-  onAdd: (person: Person) => void
+interface PersonFormProps {
+  onAdd: (data: IncomeTaxForm | GSTForm | MCAForm) => void
   group: "IncomeTax" | "GST" | "MCA"
 }
 
+const PersonForm = ({ onAdd, group }: PersonFormProps) => {
+  const schema =
+    group === "IncomeTax"
+      ? incomeTaxSchema
+      : group === "GST"
+      ? gstSchema
+      : mcaSchema
 
-const PersonForm = ({ onAdd, group }: Props) => {
-  const { register, handleSubmit, reset } = useForm<Person>({
-    defaultValues: {
-      name: "",
-      dob: "",
-      city: "",
-      email: "",
-      phoneNumber: "",
-      idNumber: "",
-      ...(group === "IncomeTax"
-        ? { panName: "", panNumber: "", itrLast3Years: "", password: "", username: "" }
-        : group === "GST"
-        ? { username: "", password: "", gstNumber: "", businessName: "" }
-        : { username: "", password: "", companyName: "" }),
-    } as Person,
+  type SchemaType = z.infer<typeof schema>
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<SchemaType>({
+    resolver: zodResolver(schema),
   })
 
-  const [selectedOption, setSelectedOption] = useState<"itr" | "password" | "username">("itr")
-
-  const onSubmit = (data: Person) => {
-    if (data.name && data.dob && data.city) {
-      onAdd(data)
-      reset()
-      setSelectedOption("itr")
-    }
+  const onSubmit = (data: SchemaType) => {
+    onAdd(data)
+    reset()
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md">
-      <h2 className="text-xl font-semibold">Add New {group} Details of Person</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4rounded bg-gray-50">
+      
+      <div>
+        <label className="block text-sm font-medium">Name</label>
+        <input {...register("name")} className="border rounded px-2 py-1 w-lg" />
+        {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+      </div>
 
-      <input {...register("name", { required: true })} placeholder="Name" className="w-full p-2 border rounded" />
-      <input {...register("dob", { required: true })} type="date" placeholder="Date of Birth" className="w-full p-2 border rounded" />
-      <input {...register("city", { required: true })} placeholder="City" className="w-full p-2 border rounded" />
-      <input {...register("email", { required: true })} type="email" placeholder="Email" className="w-full p-2 border rounded" />
-      <input {...register("phoneNumber", { required: true, pattern: /^[0-9]{10}$/ })} placeholder="Phone Number" className="w-full p-2 border rounded" />
-      <input {...register("idNumber", { required: true })} placeholder="ID Type (e.g., 1, 2, 3)" className="w-full p-2 border rounded" />
+      <div>
+        <label className="block text-sm font-medium">Date of Birth</label>
+        <input type="date" {...register("dob")} className="border rounded px-2 py-1 w-lg" />
+        {errors.dob && <p className="text-red-500 text-sm">{errors.dob.message}</p>}
+      </div>
 
+      <div>
+        <label className="block text-sm font-medium">City</label>
+        <input {...register("city")} className="border rounded px-2 py-1 w-lg" />
+        {errors.city && <p className="text-red-500 text-sm">{errors.city.message}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Email</label>
+        <input type="email" {...register("email")} className="border rounded px-2 py-1 w-lg" />
+        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Phone Number</label>
+        <input {...register("phoneNumber")} className="border rounded px-2 py-1 w-lg" />
+        {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">ID Number</label>
+        <input {...register("idNumber")} className="border rounded px-2 py-1 w-lg" />
+        {errors.idNumber && <p className="text-red-500 text-sm">{errors.idNumber.message}</p>}
+      </div>
+
+      
       {group === "IncomeTax" && (
         <>
-          <input {...register("panName", { required: true })} placeholder="Full Name as per PAN" className="w-full p-2 border rounded" />
-          <input
-            {...register("panNumber", { required: true, pattern: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/ })}
-            placeholder="PAN Number (ABCDE1234F)"
-            className="w-full p-2 border rounded uppercase"
-          />
+          <div>
+            <label className="block text-sm font-medium">PAN Name</label>
+            <input {...register("panName")} className="border rounded px-2 py-1 w-lg" />
+            {"panName" in errors && (
+              <p className="text-red-500 text-sm">{errors.panName?.message}</p>
+            )}
+          </div>
 
-          <div className="space-y-2">
-            <select
-              value={selectedOption}
-              onChange={(e) => setSelectedOption(e.target.value as "itr" | "password" | "username")}
-              className="w-full p-2 border rounded cursor-pointer"
-            >
-              <option value="itr">ITR Details</option>
-              <option value="password">Password</option>
-              <option value="username">Username</option>
-            </select>
+          <div>
+            <label className="block text-sm font-medium">PAN Number</label>
+            <input {...register("panNumber")} className="border rounded px-2 py-1 w-lg" />
+            {"panNumber" in errors && (
+              <p className="text-red-500 text-sm">{errors.panNumber?.message}</p>
+            )}
+          </div>
 
-            {selectedOption === "itr" ? (
-              <textarea
-                {...register("itrLast3Years", { required: true })}
-                placeholder="Last 3 Years ITR Details"
-                className="w-full p-2 border rounded resize"
-                rows={4}
-              />
-            ) : selectedOption === "password" ? (
-              <input {...register("password", { required: true })} type="password" placeholder="Password" className="w-full p-2 border rounded" />
-            ) : (
-              <input {...register("username", { required: true })} type="text" placeholder="Username" className="w-full p-2 border rounded" />
+          <div>
+            <label className="block text-sm font-medium">ITR Last 3 Years</label>
+            <input {...register("itrLast3Years")} className="border rounded px-2 py-1 w-lg" />
+            {"itrLast3Years" in errors && (
+              <p className="text-red-500 text-sm">{errors.itrLast3Years?.message}</p>
             )}
           </div>
         </>
@@ -117,28 +136,62 @@ const PersonForm = ({ onAdd, group }: Props) => {
 
       {group === "GST" && (
         <>
-          <input {...register("username", { required: true })} placeholder="Username" className="w-full p-2 border rounded" />
-          <input {...register("password", { required: true })} type="password" placeholder="Password" className="w-full p-2 border rounded" />
-          <input {...register("gstNumber", { required: true })} placeholder="GST Number" className="w-full p-2 border rounded" />
-          <input {...register("businessName", { required: true })} placeholder="Business Name" className="w-full p-2 border rounded" />
+          <div>
+            <label className="block text-sm font-medium">GST Number</label>
+            <input {...register("gstNumber")} className="border rounded px-2 py-1 w-lg" />
+            {"gstNumber" in errors && (
+              <p className="text-red-500 text-sm">{errors.gstNumber?.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Business Name</label>
+            <input {...register("businessName")} className="border rounded px-2 py-1 w-lg" />
+            {"businessName" in errors && (
+              <p className="text-red-500 text-sm">{errors.businessName?.message}</p>
+            )}
+          </div>
         </>
       )}
 
-      
       {group === "MCA" && (
         <>
-          <input
-            {...register("username", { required: true })}
-            placeholder="Username (CIN/LLPIN/FCRN for Company/LLP and Email ID for other users)"
-            className="w-full p-2 border rounded"
-          />
-          <input {...register("password", { required: true })} type="password" placeholder="Password" className="w-full p-2 border rounded" />
-          <input {...register("companyName", { required: true })} placeholder="Company Name" className="w-full p-2 border rounded" />
+          <div>
+            <label className="block text-sm font-medium">CIN Number</label>
+            <input {...register("cinNumber")} className="border rounded px-2 py-1 w-lg" />
+            {"cinNumber" in errors && (
+              <p className="text-red-500 text-sm">{errors.cinNumber?.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Company Name</label>
+            <input {...register("companyName")} className="border rounded px-2 py-1 w-lg" />
+            {"companyName" in errors && (
+              <p className="text-red-500 text-sm">{errors.companyName?.message}</p>
+            )}
+          </div>
         </>
       )}
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        Add
+      <div>
+        <label className="block text-sm font-medium">Username</label>
+        <input {...register("username")} className="border rounded px-2 py-1 w-lg" />
+        {"username" in errors && (
+          <p className="text-red-500 text-sm">{errors.username?.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Password</label>
+        <input type="password" {...register("password")} className="border rounded px-2 py-1 w-lg" />
+        {"password" in errors && (
+          <p className="text-red-500 text-sm">{errors.password?.message}</p>
+        )}
+      </div>
+
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer">
+        Add Person
       </button>
     </form>
   )
