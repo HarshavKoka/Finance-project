@@ -44,12 +44,13 @@ const FinancialCoverPage = () => {
         </div>
 
        
-        <button
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-full transition cursor-pointer"
-          onClick={() => navigate('/login')} 
-        >
-          Explore Services
-        </button>
+      <button
+  className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-full transition cursor-pointer"
+  onClick={() => navigate('/roles')}
+>
+  Explore Services
+</button>
+
       </div>
     </div>
   );
