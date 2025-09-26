@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 
-const Home = () => {
-  const navigate = useNavigate()
-  const blocks = ["IncomeTax", "GST", "MCA"]
+const EmployeeHome = () => {
+  const navigate = useNavigate();
+  const blocks = [ "ITR","GST", "MCA"];
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-10">
@@ -10,7 +10,7 @@ const Home = () => {
         {blocks.map((label) => (
           <div
             key={label}
-            onClick={() => navigate(`/people?group=${label}`)}
+            onClick={() => navigate(`/employee-home/${label.toLowerCase()}`)}
             className="cursor-pointer bg-white shadow-lg rounded-xl p-10 text-center text-xl font-semibold hover:bg-blue-100 transition"
           >
             {label}
@@ -18,7 +18,7 @@ const Home = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default EmployeeHome;
